@@ -26,12 +26,14 @@ proc `==` *(a, b: Color): bool {.borrow.}
   ##   assert not a == c
 
 template extract(a: Color, r, g, b: untyped) =
-  var r = a.int shr 16 and 0xff
-  var g = a.int shr 8 and 0xff
-  var b = a.int and 0xff
+  var r = (a.int and 0xff0000) shr 16
+  var g = (a.int and 0x00ff00) shr 8
+  var b = (a.int and 0x0000ff)
 
 template rawRGB(r, g, b: int): Color =
-  Color(r shl 16 or g shl 8 or b)
+  Color(((r and 0xff) shl 16) or
+        ((g and 0xff) shl 8) or
+         (b and 0xff))
 
 template colorOp(op): Color =
   extract(a, ar, ag, ab)
@@ -43,8 +45,8 @@ proc satPlus(a, b: int): int {.inline.} =
   if result > 255: result = 255
 
 proc satMinus(a, b: int): int {.inline.} =
-  result = a -% b
-  if result < 0: result = 0
+  if b > a: result = 0
+  else: result = a -% b
 
 proc `+`*(a, b: Color): Color =
   ## Adds two colors.
@@ -82,17 +84,14 @@ proc extractRGB*(a: Color): tuple[r, g, b: range[0..255]] =
       a = Color(0xff_00_ff)
       b = Color(0x00_ff_cc)
     type
-      Col = range[0..255]
-    # assert extractRGB(a) == (r: 255.Col, g: 0.Col, b: 255.Col)
-    # assert extractRGB(b) == (r: 0.Col, g: 255.Col, b: 204.Col)
-    echo extractRGB(a)
-    echo typeof(extractRGB(a))
-    echo extractRGB(b)
-    echo typeof(extractRGB(b))
+      Col =range[0..255]
+    assert extractRGB(a) == (r: 255.Col, g: 0.Col, b: 255.Col)
+    assert extractRGB(b) == (r: 0.Col, g: 255.Col, b: 204.Col)
 
-  result.r = a.int shr 16 and 0xff
-  result.g = a.int shr 8 and 0xff
-  result.b = a.int and 0xff
+  extract(a, r, g, b)
+  result.r = r
+  result.g = g
+  result.b = b
 
 proc intensity*(a: Color, f: float): Color =
   ## Returns `a` with intensity `f`. `f` should be a float from 0.0 (completely
@@ -105,9 +104,10 @@ proc intensity*(a: Color, f: float): Color =
     assert a.intensity(0.5) == Color(0x80_00_80)
     assert b.intensity(0.5) == Color(0x00_21_66)
 
-  var r = toInt(toFloat(a.int shr 16 and 0xff) * f)
-  var g = toInt(toFloat(a.int shr 8 and 0xff) * f)
-  var b = toInt(toFloat(a.int and 0xff) * f)
+  extract(a, r, g, b)
+  r = toInt(toFloat(r) * f)
+  g = toInt(toFloat(g) * f)
+  b = toInt(toFloat(b) * f)
   if r >% 255: r = 255
   if g >% 255: g = 255
   if b >% 255: b = 255
