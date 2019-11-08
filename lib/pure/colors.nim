@@ -76,17 +76,15 @@ proc `-`*(a, b: Color): Color =
 
   colorOp(satMinus)
 
-proc extractRGB*(a: Color): tuple[r, g, b: range[0..255]] =
+proc extractRGB*(a: Color): tuple[r, g, b: int] =
   ## Extracts the red/green/blue components of the color `a`.
   ##
   runnableExamples:
     var
       a = Color(0xff_00_ff)
       b = Color(0x00_ff_cc)
-    type
-      Col =range[0..255]
-    assert extractRGB(a) == (r: 255.Col, g: 0.Col, b: 255.Col)
-    assert extractRGB(b) == (r: 0.Col, g: 255.Col, b: 204.Col)
+    assert extractRGB(a) == (r: 255, g: 0, b: 255)
+    assert extractRGB(b) == (r: 0, g: 255, b: 204)
 
   extract(a, r, g, b)
   result.r = r
@@ -479,7 +477,7 @@ proc isColor*(name: string): bool =
   else:
     result = binarySearch(colorNames, name, colorNameCmp) >= 0
 
-proc rgb*(r, g, b: range[0..255]): Color =
+proc rgb*(r, g, b: int): Color =
   ## Constructs a color from RGB values.
   ##
   runnableExamples:
