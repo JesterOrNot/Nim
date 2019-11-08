@@ -25,17 +25,18 @@ proc `==` *(a, b: Color): bool {.borrow.}
   ##   assert a == b
   ##   assert not a == c
 
-template extract(a: Color, r, g, b: untyped) =
-  var r = (a.int and 0xff0000) shr 16
-  var g = (a.int and 0x00ff00) shr 8
-  var b = (a.int and 0x0000ff)
+proc extract(a: Color, r, g, b: var int) =
+  r = (a.int and 0xff0000) shr 16
+  g = (a.int and 0x00ff00) shr 8
+  b = (a.int and 0x0000ff)
 
-template rawRGB(r, g, b: int): Color =
-  Color(((r and 0xff) shl 16) or
-        ((g and 0xff) shl 8) or
-         (b and 0xff))
+proc rawRGB(r, g, b: int): Color =
+  result = Color(((r and 0xff) shl 16) or
+                 ((g and 0xff) shl 8) or
+                  (b and 0xff))
 
 template colorOp(op): Color =
+  var ar, ag, ab, br, bg, bb: int
   extract(a, ar, ag, ab)
   extract(b, br, bg, bb)
   rawRGB(op(ar, br), op(ag, bg), op(ab, bb))
@@ -86,6 +87,7 @@ proc extractRGB*(a: Color): tuple[r, g, b: int] =
     assert extractRGB(a) == (r: 255, g: 0, b: 255)
     assert extractRGB(b) == (r: 0, g: 255, b: 204)
 
+  var r, g, b: int
   extract(a, r, g, b)
   result.r = r
   result.g = g
@@ -102,6 +104,7 @@ proc intensity*(a: Color, f: float): Color =
     assert a.intensity(0.5) == Color(0x80_00_80)
     assert b.intensity(0.5) == Color(0x00_21_66)
 
+  var r, g, b: int
   extract(a, r, g, b)
   r = toInt(toFloat(r) * f)
   g = toInt(toFloat(g) * f)
@@ -136,6 +139,7 @@ template mix*(a, b: Color, fn: untyped): untyped =
         y = if y < 0: 0 else: 255
       y
 
+  var ar, ag, ab, br, bg, bb: int
   extract(a, ar, ag, ab)
   extract(b, br, bg, bb)
   rawRGB(><fn(ar, br), ><fn(ag, bg), ><fn(ab, bb))
