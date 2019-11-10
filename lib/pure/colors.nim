@@ -26,14 +26,14 @@ proc `==` *(a, b: Color): bool {.borrow.}
   ##   assert not a == c
 
 proc extract(a: Color, r, g, b: var int) =
-  r = (a.int and 0xff0000) shr 16
-  g = (a.int and 0x00ff00) shr 8
-  b = (a.int and 0x0000ff)
+  r = int((a.uint and 0xff0000'u) shr 16)
+  g = int((a.uint and 0x00ff00'u) shr 8)
+  b = int(a.uint and 0x0000ff'u)
 
 proc rawRGB(r, g, b: int): Color =
-  result = Color(((r and 0xff) shl 16) or
-                 ((g and 0xff) shl 8) or
-                  (b and 0xff))
+  result = Color(int(((uint(r) and 0xff'u) shl 16) or
+                 ((uint(g) and 0xff'u) shl 8) or
+                  (uint(b) and 0xff'u)))
 
 template colorOp(op): Color =
   var ar, ag, ab, br, bg, bb: int
