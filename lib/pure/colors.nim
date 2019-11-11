@@ -55,6 +55,11 @@ proc `+`*(a, b: Color): Color =
   ## This uses saturated arithmetic, so that each color
   ## component cannot overflow (255 is used as a maximum).
   ##
+  runnableExamples:
+    var
+      a = Color(0xaa_00_ff)
+      b = Color(0x11_cc_cc)
+    assert a + b == Color(0xbb_cc_ff)
 
   colorOp(satPlus)
 
@@ -64,12 +69,23 @@ proc `-`*(a, b: Color): Color =
   ## This uses saturated arithmetic, so that each color
   ## component cannot underflow (0 is used as a minimum).
   ##
+  runnableExamples:
+    var
+      a = Color(0xff_33_ff)
+      b = Color(0x11_ff_cc)
+    assert a - b == Color(0xee_00_33)
 
   colorOp(satMinus)
 
 proc extractRGB*(a: Color): tuple[r, g, b: int] =
   ## Extracts the red/green/blue components of the color `a`.
   ##
+  runnableExamples:
+    var
+      a = Color(0xff_00_ff)
+      b = Color(0x00_ff_cc)
+    assert extractRGB(a) == (r: 255, g: 0, b: 255)
+    assert extractRGB(b) == (r: 0, g: 255, b: 204)
 
   var r, g, b: int
   extract(a, r, g, b)
@@ -81,6 +97,12 @@ proc intensity*(a: Color, f: float): Color =
   ## Returns `a` with intensity `f`. `f` should be a float from 0.0 (completely
   ## dark) to 1.0 (full color intensity).
   ##
+  runnableExamples:
+    var
+      a = Color(0xff_00_ff)
+      b = Color(0x00_42_cc)
+    assert a.intensity(0.5) == Color(0x80_00_80)
+    assert b.intensity(0.5) == Color(0x00_21_66)
 
   var r, g, b: int
   extract(a, r, g, b)
@@ -99,6 +121,15 @@ template mix*(a, b: Color, fn: untyped): untyped =
   ## If `fn`'s result is not in the `range[0..255]`,
   ## it will be saturated to be so.
   ##
+  runnableExamples:
+    var
+      a = Color(0x0a2814)
+      b = Color(0x050a03)
+
+    proc myMix(x, y: int): int =
+      2 * x - 3 * y
+
+    assert mix(a, b, myMix) == Color(0x05_32_1f)
 
   template `><` (x: untyped): untyped =
     # keep it in the range 0..255
@@ -401,6 +432,8 @@ const
 proc `$`*(c: Color): string =
   ## Converts a color into its textual representation.
   ##
+  runnableExamples:
+    assert $colFuchsia == "#FF00FF"
   result = '#' & toHex(int(c), 6)
 
 proc colorNameCmp(x: tuple[name: string, col: Color], y: string): int =
@@ -412,6 +445,14 @@ proc parseColor*(name: string): Color =
   ## If no valid color could be parsed ``ValueError`` is raised.
   ## Case insensitive.
   ##
+  runnableExamples:
+    var
+      a = "silver"
+      b = "#0179fc"
+      c = "#zzmmtt"
+    assert parseColor(a) == Color(0xc0_c0_c0)
+    assert parseColor(b) == Color(0x01_79_fc)
+    doAssertRaises(ValueError): discard parseColor(c)
 
   if name[0] == '#':
     result = Color(parseHexInt(name))
@@ -424,6 +465,14 @@ proc isColor*(name: string): bool =
   ## Returns true if `name` is a known color name or a hexadecimal color
   ## prefixed with ``#``. Case insensitive.
   ##
+  runnableExamples:
+    var
+      a = "silver"
+      b = "#0179fc"
+      c = "#zzmmtt"
+    assert a.isColor
+    assert b.isColor
+    assert not c.isColor
 
   if name[0] == '#':
     for i in 1 .. name.len-1:
@@ -435,66 +484,7 @@ proc isColor*(name: string): bool =
 proc rgb*(r, g, b: int): Color =
   ## Constructs a color from RGB values.
   ##
+  runnableExamples:
+    assert rgb(0, 255, 128) == Color(0x00_ff_80)
 
   result = rawRGB(r, g, b)
-
-
-
-when isMainModule:
-  block:
-    var
-      a = Color(0xaa_00_ff)
-      b = Color(0x11_cc_cc)
-    assert a + b == Color(0xbb_cc_ff)
-
-  block:
-    var
-      a = Color(0xff_33_ff)
-      b = Color(0x11_ff_cc)
-    assert a - b == Color(0xee_00_33)
-
-  block:
-    var
-      a = Color(0xff_00_ff)
-      b = Color(0x00_ff_cc)
-    assert extractRGB(a) == (r: 255, g: 0, b: 255)
-    assert extractRGB(b) == (r: 0, g: 255, b: 204)
-
-  block:
-    var
-      a = Color(0xff_00_ff)
-      b = Color(0x00_42_cc)
-    assert a.intensity(0.5) == Color(0x80_00_80)
-    assert b.intensity(0.5) == Color(0x00_21_66)
-
-  block:
-    var
-      a = Color(0x0a2814)
-      b = Color(0x050a03)
-    proc myMix(x, y: int): int =
-      2 * x - 3 * y
-    assert mix(a, b, myMix) == Color(0x05_32_1f)
-
-  block:
-    assert $colFuchsia == "#FF00FF"
-
-  block:
-    var
-      a = "silver"
-      b = "#0179fc"
-      c = "#zzmmtt"
-    assert parseColor(a) == Color(0xc0_c0_c0)
-    assert parseColor(b) == Color(0x01_79_fc)
-    doAssertRaises(ValueError): discard parseColor(c)
-
-  block:
-    var
-      a = "silver"
-      b = "#0179fc"
-      c = "#zzmmtt"
-    assert a.isColor
-    assert b.isColor
-    assert not c.isColor
-
-  block:
-    assert rgb(0, 255, 128) == Color(0x00_ff_80)
